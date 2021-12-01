@@ -1,0 +1,15 @@
+server:
+    port: 8081
+    ssl:
+        key-store: classpath:server.p12
+        key-store-password: password
+        trust-store: classpath:truststore.p12
+        trust-store-password: password
+        client-auth: need
+fapi:
+    resource-server:
+        config:
+            issuer: https://localhost:8443/auth/realms/fapi
+            allowed-scope: openid
+            filtered-path: /
+            client-id: fapi-resource-server

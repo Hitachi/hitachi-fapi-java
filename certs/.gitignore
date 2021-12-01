@@ -1,0 +1,6 @@
+app
+ca
+keycloak
+server
+*.p12
+*.jks

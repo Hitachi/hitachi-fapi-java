@@ -1,0 +1,22 @@
+server:
+    port: 8082
+    ssl:
+        key-store: classpath:app.p12
+        key-store-password: password
+        trust-store: classpath:truststore.p12
+        trust-store-password: password
+fapi:
+    config:
+        issuer: https://localhost:8443/auth/realms/fapi
+        client-id: fapi-client
+        #client-auth-method: private_key_jwt
+        client-auth-method: tls_client_auth
+        resource-servers:
+        - https://localhost:8081
+        scopes:
+          - email
+          - openid
+          - profile 
+        jws-alg: PS256
+        # jwe-alg: RSA-OAEP-256
+

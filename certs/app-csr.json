@@ -1,0 +1,12 @@
+{
+    "CN": "fapi-client",
+    "hosts": [
+        "localhost",
+        "127.0.0.1",
+        "fapi-client"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    }
+}

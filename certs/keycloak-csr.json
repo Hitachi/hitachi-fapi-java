@@ -1,0 +1,12 @@
+{
+    "CN": "fapi-keycloak",
+    "hosts": [
+        "localhost",
+        "127.0.0.1",
+        "keyclaok"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    }
+}

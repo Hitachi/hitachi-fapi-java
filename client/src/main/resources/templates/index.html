@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="jp">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAPI Samples</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+
+</head>
+
+<body>
+    <div class="container">
+        <h1>FAPI Reference Implementation (Client)</h1>
+        <div th:if="${err}" class="alert alert-danger alert-dismissible">
+            <p th:text="${err}"></p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div class="container row">
+            <div class="col-lg-7 mb-3">
+                <h2>Authorization</h2>
+                <div class="row">
+
+                    <div class="col-6">
+                        <dl>
+                            <dt> issuer </dt>
+                            <dd> <span th:text="${@fapiConfig.getIssuer()}"></span></dd>
+                            <dt> clientId</dt>
+                            <dd> <span th:text="${@fapiConfig.getClientID()}"></span></dd>
+                            <dt> scope:</dt>
+                            <dd> <span th:text="${#strings.arrayJoin(@fapiConfig.getScopes(), ' ')}"></span></dd>
+                        </dl>
+                    </div>
+                    <div class="col-6">
+                        <dl>
+                            <dt> client auth method</dt>
+                            <dd><span th:text="${@fapiConfig.getClientAuthMethod()}"></span></dd>
+                            <dt> JWS Signature Algolithm </dt>
+                            <dd> <span th:text="${@fapiConfig.getJwsAlg()}"></span></dd>
+                            <dt> JWE Encryption Algolithm </dt>
+                            <dd> <span th:text="${@fapiConfig.getJweAlg()}"></span></dd>
+
+                        </dl>
+                    </div>
+                    <div class="col-10 text-end">
+                        <a class="btn btn-primary" href="/auth">Get Token</a>
+                        <a class="btn btn-success" href="/refresh">Refresh Token</a>
+                        <a class="btn btn-secondary" href="/revoke">Revoke Token</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5 mb-3">
+                <h2>Call API</h2>
+                <form method="POST" th:action="@{/call-api}">
+                    <div class="mb-3 row">
+                        <label for="server" class="col-3 col-form-label">Server</label>
+                        <div class="col-9">
+                            <select id="server" class="form-select" name="server">
+                                <option th:each="rs : ${@fapiConfig.getResourceServers()}" th:value="${rs}"
+                                    th:text="${rs}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="server" class="col-3 col-form-label">Path</label>
+                        <div class="col-9">
+                            <input type="text" class="form-control" name="path" value="/">
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary">Call API</button>
+                        </div>
+                    </div>
+                </form>
+                <span>headers</span>
+                <pre class=" text-break text-wrap" th:text="${headers}"></pre>
+                <span>body</span>
+                <pre class=" text-break text-wrap" th:text="${response}"></pre>
+
+            </div>
+
+
+            <div class="col-12 mb-3" th:if="${@clientSession.getTokenResponse}">
+                <h2> Token </h2>
+                <div class="accordion accordion-flush" id="tokens">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="access-token-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#access-token" aria-expanded="false" aria-controls="access-token">
+                                Access Token
+                            </button>
+                        </h2>
+                        <div id="access-token" class="accordion-collapse collapse" aria-labelledby="access-token-header"
+                            data-bs-parent="#tokens">
+                            <div class="accordion-body">
+                                <pre class="text-break text-wrap" style="text-overflow: ellipsis;white-space: nowrap;">
+                                    <code th:text="${@clientSession.getAccessTokenString()}"></code>
+                                </pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="refresh-token-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#refresh-token" aria-expanded="false" aria-controls="refresh-token">
+                                Refresh Token
+                            </button>
+                        </h2>
+                        <div id="refresh-token" class="accordion-collapse collapse"
+                            aria-labelledby="refresh-token-header" data-bs-parent="#tokens">
+                            <div class="accordion-body">
+                                <pre class="text-break text-wrap" style="text-overflow: ellipsis;white-space: nowrap;">
+                                    <code th:text="${@clientSession.getRefreshTokenString()}"></code>
+                                </pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="id-token-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#id-token" aria-expanded="false" aria-controls="id-token">
+                                ID Token
+                            </button>
+                        </h2>
+                        <div id="id-token" class="accordion-collapse collapse" aria-labelledby="id-token-header"
+                            data-bs-parent="#tokens">
+                            <div class="accordion-body">
+                                <pre class="text-break text-wrap" style="text-overflow: ellipsis;white-space: nowrap;">
+                                    <code th:text="${@clientSession.getIDTokenString()}"></code>
+                                </pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+
+
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW"
+            crossorigin="anonymous"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,12 @@
+{
+    "CN": "fapi-resource-server",
+    "hosts": [
+        "localhost",
+        "127.0.0.1",
+        "fapi-resource-server"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    }
+}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <form method="POST" target="/callback">
+
+    </form>
+    <script type="text/javascript">
+        (function () {
+            var form = document.forms[0];
+            var hash = location.hash.substring(1).split("&")
+
+            hash.forEach(h => {
+                var frag = h.split("=");
+                var input = document.createElement("input");
+                input.setAttribute("name", frag[0]);
+                input.setAttribute("value", frag[1]);
+                input.setAttribute("type", "hidden");
+                form.appendChild(input);
+            });
+            console.log(form);
+            form.submit();
+        })();
+    </script>
+</body>
+
+</html>

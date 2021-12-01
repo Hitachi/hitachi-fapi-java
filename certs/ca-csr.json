@@ -1,0 +1,7 @@
+{
+    "CN": "fapi-ca",
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    }
+}
