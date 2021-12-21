@@ -15,6 +15,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +33,8 @@ import fapi.server.TokenIntrospectionResponse.CNF;
 @Component
 public class RequestValidator implements Filter {
 
+    static final private Logger logger = LoggerFactory.getLogger(RequestValidator.class);
+
     @Autowired
     @Lazy
     private ServerMetadata metadata;
@@ -46,28 +50,49 @@ public class RequestValidator implements Filter {
             throws IOException, ServletException {
 
         HttpServletRequest servletRequest = (HttpServletRequest) request;
-        if (config.getFilteredPath() == null || servletRequest.getRequestURI().startsWith(config.getFilteredPath())) {
-            validateRequest(servletRequest);
-        }
         HttpServletResponse servletResponse = (HttpServletResponse) response;
         String id = Optional.ofNullable(servletRequest.getHeader("x-fapi-interaction-id"))
                 .orElse(UUID.randomUUID().toString());
-        servletResponse.setDateHeader("Date", System.currentTimeMillis());
-        servletResponse.setHeader("x-fapi-interaction-id", id);
-        chain.doFilter(request, response);
+        logger.info("x-fapi-interaction-id [" + id + "]");
+        try {
+            if (config.getFilteredPath() == null
+                    || servletRequest.getRequestURI().startsWith(config.getFilteredPath())) {
+                validateRequest(servletRequest);
+            }
+            servletResponse.setDateHeader("Date", System.currentTimeMillis());
+            servletResponse.setHeader("x-fapi-interaction-id", id);
+            chain.doFilter(request, response);
+        } catch (ResourceServerException e) {
+            servletResponse.setHeader("WWW-Authenticate", e.getErrorString());
+            servletResponse.sendError(e.getStatus());
+            logger.error("x-fapi-interaction-id={}, {}", id , e.getErrorString());
+        }
 
     }
 
-    private void validateRequest(HttpServletRequest servletRequest) throws ServletException {
-        String token = servletRequest.getHeader("Authorization").split(" ")[1];
+    private void validateRequest(HttpServletRequest servletRequest) throws ResourceServerException {
+        if (servletRequest.getQueryString() != null) {
+            throw new ResourceServerException(ResourceServerException.INVALID_REQUEST,
+                    "included invalid query parameters",
+                    HttpServletResponse.SC_BAD_REQUEST);
+        }
+
+        String authHeader = servletRequest.getHeader("Authorization");
+        if (authHeader == null) {
+            throw new ResourceServerException("", "", HttpServletResponse.SC_UNAUTHORIZED);
+        }
+
+        String token = authHeader.split(" ")[1];
         TokenIntrospectionResponse introspectionResponse = executeTokenIntrospection(token);
         if (!introspectionResponse.isActive()) {
-            throw new ServletException("access token not active");
+            throw new ResourceServerException(ResourceServerException.INVALID_TOKEN, "access token not active",
+                    HttpServletResponse.SC_UNAUTHORIZED);
         }
 
         Date exp = new Date(introspectionResponse.getExp() * 1000);
         if (!exp.after(new Date())) {
-            throw new ServletException("introspection response expired");
+            throw new ResourceServerException(ResourceServerException.INVALID_TOKEN, "introspection response expired",
+                    HttpServletResponse.SC_UNAUTHORIZED);
         }
 
         X509Certificate[] certs = (X509Certificate[]) servletRequest
@@ -93,13 +118,15 @@ public class RequestValidator implements Filter {
         return result.getBody();
     }
 
-    private void validateCnfValue(X509Certificate[] certs, CNF cnf) throws ServletException {
+    private void validateCnfValue(X509Certificate[] certs, CNF cnf) throws ResourceServerException {
         if (certs == null || certs.length == 0) {
-            throw new ServletException("request has no certificates information");
+            throw new ResourceServerException(ResourceServerException.INVALID_TOKEN,
+                    "request has no certificates information", HttpServletResponse.SC_UNAUTHORIZED);
         }
 
-        if (cnf.getX5t() == null) {
-            throw new ServletException("IntrospectionResponse has no cnf value");
+        if (cnf == null || cnf.getX5t() == null) {
+            throw new ResourceServerException(ResourceServerException.INVALID_TOKEN,
+                    "IntrospectionResponse has no cnf value", HttpServletResponse.SC_UNAUTHORIZED);
         }
         String actual = null;
         try {
@@ -112,8 +139,9 @@ public class RequestValidator implements Filter {
             e.printStackTrace();
         }
         if (!cnf.getX5t().equals(actual)) {
-            throw new ServletException(
-                    String.format("x5t#S256 is not match: expected [%s], actual [%s]", cnf.getX5t(), actual));
+            throw new ResourceServerException(ResourceServerException.INVALID_TOKEN,
+                    String.format("x5t#S256 is not match: expected [%s], actual [%s]", cnf.getX5t(), actual),
+                    HttpServletResponse.SC_UNAUTHORIZED);
         }
     }
 
