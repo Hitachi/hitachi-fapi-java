@@ -2,6 +2,14 @@
 
 Reference Implementation of Financial-grade API 1.0(FAPI 1.0) Client Application and Resource Server following [Financial-grade API Security Profile 1.0 - Part 2: Advanced](https://openid.net/specs/openid-financial-api-part-2-1_0.html) 
 
+## Certification
+Hitachi has [certified](https://openid.net/certification/#FAPI-RW_RPs) that Reference Implementation of FAPI 1.0 Client Application conforms to the following profiles of the OpenID Connect™ protocol
+
+- FAPI Adv. RP w/ MTLS
+- FAPI Adv. RP w/ Private Key
+
+![OpenID Certified Mark](OpenID-Certified-Mark.png) 
+
 ## Specs of Client Application
 
 - TLS
